@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#050505">
+<title>بيت الخونة</title>
+<meta name="description" content="بيت الخونة — لعبة الشك والخيانة. قنبلة واحدة، بطاقة لكل لاعب، وخائن بينكم.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💣</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="stage-bg" aria-hidden="true">
+  <div class="plate">
+    <video class="plate-video" id="plate-video" autoplay muted loop playsinline preload="auto"
+           poster="https://assets.mixkit.co/videos/1967/1967-thumb-720-0.jpg">
+      <source src="https://assets.mixkit.co/videos/1967/1967-720.mp4" type="video/mp4">
+    </video>
+  </div>
+  <div class="beam"></div>
+  <div class="haze"></div>
+  <div class="grain"></div>
+</div>
+<div class="embers" id="embers" aria-hidden="true"></div>
+
+<header class="topbar" id="topbar">
+  <div class="topbar-brand">
+    <span class="mark" aria-hidden="true">
+      <svg viewBox="0 0 22 34" width="14" height="22">
+        <path d="M15 0 L15 13.6 L22 13.6 L22 20.3 L7 34 L7 20 L0.4 20 L0.4 13 Z" fill="currentColor"/>
+      </svg>
+    </span>
+    <span class="topbar-name">بيت الخونة</span>
+  </div>
+  <button type="button" id="btn-mute" class="icon-btn" aria-label="كتم الصوت">
+    <span id="mute-icon">🔊</span>
+  </button>
+</header>
+
+<main id="app">
+
+  <!-- ===================== SPLASH ===================== -->
+  <section class="screen active" id="screen-splash">
+    <div class="splash-stage">
+      <div class="portal" aria-hidden="true"><span class="portal-core"></span></div>
+      <p class="eyebrow rise d1">لعبة الشك والخيانة</p>
+      <h1 class="splash-title rise d2">بيت الخونة</h1>
+      <p class="splash-tagline rise d3">قنبلةٌ واحدة. بطاقةٌ لكل لاعب. وخائنٌ بينكم لا يعرفه أحد.</p>
+      <div class="actions rise d4">
+        <button id="btn-enter" class="pill">ابدأ اللعب</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SETUP ===================== -->
+  <section class="screen" id="screen-setup">
+    <div class="stage">
+      <header class="head">
+        <p class="eyebrow">الإعداد</p>
+        <h2 class="h2">تسجيل اللاعبين</h2>
+        <p class="sub">أضِف الأسماء، ثم مرّروا هاتفًا واحدًا بينكم.</p>
+      </header>
+
+      <div id="scoreboard-mini" class="score hidden">
+        <div class="score-row">
+          <div class="score-cell"><span class="score-val" id="sb-traitor">٠</span><span class="score-key">الخونة</span></div>
+          <div class="score-cell"><span class="score-val" id="sb-civilian">٠</span><span class="score-key">الأبرياء</span></div>
+          <div class="score-cell"><span class="score-val" id="sb-saves">٠</span><span class="score-key">نجاة</span></div>
+        </div>
+        <p class="score-caption">جولة رقم <span id="sb-round">١</span></p>
+      </div>
+
+      <div class="panel">
+        <form id="form-add-player" class="add-row" autocomplete="off">
+          <input type="text" id="input-name" placeholder="اكتب اسم اللاعب" maxlength="24" required>
+          <button type="submit" class="chip-btn" aria-label="إضافة الاسم">إضافة</button>
+        </form>
+        <ul id="player-list" class="player-list"></ul>
+        <p id="player-hint" class="note">أضِف ٣ أسماء على الأقل للبدء.</p>
+      </div>
+
+      <p class="cards-note" id="cards-note"></p>
+
+      <label class="switch-row" for="toggle-pressure">
+        <span class="switch">
+          <input type="checkbox" id="toggle-pressure">
+          <span class="switch-track"><span class="switch-thumb"></span></span>
+        </span>
+        <span class="switch-text">
+          <span class="switch-title">وضع الضغط الزمني</span>
+          <span class="switch-desc">مهلة محسوبة للاختيار وللاتهام — من دون قرار، القنبلة تقرر بدلًا عنك</span>
+        </span>
+      </label>
+
+      <button id="btn-start" class="pill pill-wide" disabled>ابدأ اللعبة</button>
+
+      <button id="btn-rules-toggle" class="ghost-btn">كيف تُلعب؟</button>
+      <div id="rules-box" class="panel rules hidden">
+        <ol>
+          <li>سجّل أسماء كل من سيلعب، ثم مرّر الهاتف بينكم دورًا بعد دور.</li>
+          <li>كل شخص يفتح ملفّه وحده، ولا يُطلع أحدًا على ما رآه.</li>
+          <li>شخص واحد فقط يحمل القنبلة، وعليه اختيار من سيرميها عليه سرًّا. ترتيب الأدوار عشوائي تمامًا، فلا يدل أوّل من يفتح ملفّه على شيء.</li>
+          <li>كل لاعب يحمل بطاقة مختلفة عن الجميع. بعضها يحميك إن استُهدفت، وبعضها يمنحك معلومة سرّية، وبعضها يقلب النتيجة رأسًا على عقب.</li>
+          <li>البطاقات الاستخبارية تكذب أحيانًا. لا أحد يملك يقينًا كاملًا، ومن يدّعي معرفة الخائن قد يكون مخدوعًا — أو خائنًا يحاول تضليلكم.</li>
+          <li>بعد اكتمال الأدوار تنكشف هوية الضحية، وقد تنقذه بطاقته تلقائيًا، وإلا فعليه أن يخمّن الخائن حسب ما تسمح به بطاقته.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PASS ===================== -->
+  <section class="screen" id="screen-pass">
+    <div class="stage stage-center">
+      <div class="dots" id="turn-dots-pass"></div>
+      <p class="eyebrow" id="pass-turn-counter"></p>
+      <p class="sub">مرّر الهاتف إلى</p>
+      <h2 class="display" id="pass-name">—</h2>
+      <p class="note-dim">تأكد أن بقية اللاعبين لا يرون الشاشة الآن</p>
+      <button id="btn-reveal" class="pill pill-wide">أنا هذا الشخص — افتح ملفّي</button>
+    </div>
+  </section>
+
+  <!-- ===================== REVEAL ===================== -->
+  <section class="screen" id="screen-reveal">
+    <div class="stage stage-center">
+      <div class="dots" id="turn-dots-reveal"></div>
+
+      <div class="file" id="file-card">
+        <div class="file-seal" id="seal-cover">
+          <span class="seal-line" aria-hidden="true"></span>
+          <p class="seal-text">ملفٌّ سرّي — لا يُفتح إلا من صاحبه</p>
+          <button type="button" id="btn-break-seal" class="pill pill-sm">افتح الملف</button>
+        </div>
+
+        <div class="file-body" id="file-card-inner">
+          <div class="file-stamp" id="file-stamp" aria-hidden="true"></div>
+          <h2 class="file-title" id="file-title">—</h2>
+          <p class="file-text" id="file-body">—</p>
+
+          <div id="special-card-panel" class="trait hidden">
+            <span class="trait-icon" id="special-card-icon">—</span>
+            <span class="trait-title" id="special-card-title">—</span>
+            <p class="trait-desc" id="special-card-desc">—</p>
+          </div>
+
+          <div id="action-timer" class="ring hidden"></div>
+          <div id="target-picker" class="picker hidden"></div>
+        </div>
+      </div>
+
+      <button id="btn-done-turn" class="pill pill-wide" disabled>تم — التالي</button>
+    </div>
+  </section>
+
+  <!-- ===================== ROUND END ===================== -->
+  <section class="screen" id="screen-round-end">
+    <div class="stage stage-center">
+      <div class="portal sm" aria-hidden="true"><span class="portal-core"></span></div>
+      <h2 class="h2">أُغلقت الملفّات جميعًا</h2>
+      <p class="sub">كل واحد منكم يحمل الآن سرّه الخاص. لنرَ من أصابته القنبلة.</p>
+      <button id="btn-to-victim" class="pill pill-wide">اكشف الضحية</button>
+    </div>
+  </section>
+
+  <!-- ===================== VICTIM REVEAL ===================== -->
+  <section class="screen" id="screen-victim-reveal">
+    <div class="stage stage-center">
+      <div class="blast" id="blast-icon">💥</div>
+      <p class="eyebrow danger" id="blast-eyebrow">انفجرت القنبلة</p>
+      <h2 class="display victim" id="victim-name-display">—</h2>
+      <p class="sub" id="victim-reveal-sub">والآن، على الضحية وحده أن يعرف من فعل هذا.</p>
+      <button id="btn-to-victim-pass" class="pill pill-wide">مرّر الهاتف إلى الضحية</button>
+    </div>
+  </section>
+
+  <!-- ===================== ACCUSATION ===================== -->
+  <section class="screen" id="screen-accusation">
+    <div class="stage stage-center">
+      <p class="note-dim" id="accusation-pass-warning">وحده الضحية من يجب أن يرى هذه الشاشة</p>
+      <h2 class="display" id="accusation-name">—</h2>
+
+      <div class="panel">
+        <p class="panel-label">من رمى القنبلة عليك؟</p>
+        <p class="note" id="accusation-hint">اختر اسمًا واحدًا. اختيار خاطئ يعني خروجك من اللعبة.</p>
+        <p id="accusation-card-badge" class="badge hidden"></p>
+        <p id="accusation-feedback" class="alert hidden"></p>
+        <div id="accusation-timer" class="ring hidden"></div>
+        <div id="accusation-picker" class="picker"></div>
+        <p id="accusation-picker-hint" class="note hidden"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== RESULT ===================== -->
+  <section class="screen" id="screen-result">
+    <div class="stage stage-center">
+      <div class="blast" id="result-mark">—</div>
+      <h2 class="h2" id="result-heading">—</h2>
+      <p class="sub" id="result-sub">—</p>
+
+      <div id="scoreboard-result" class="score">
+        <div class="score-row">
+          <div class="score-cell"><span class="score-val" id="sb-traitor-2">٠</span><span class="score-key">الخونة</span></div>
+          <div class="score-cell"><span class="score-val" id="sb-civilian-2">٠</span><span class="score-key">الأبرياء</span></div>
+          <div class="score-cell"><span class="score-val" id="sb-saves-2">٠</span><span class="score-key">نجاة</span></div>
+        </div>
+        <p class="score-caption">بعد <span id="sb-round-2">١</span> جولة</p>
+      </div>
+
+      <div class="actions col">
+        <button id="btn-replay-same" class="pill pill-wide">جولة جديدة بنفس الأسماء</button>
+        <button id="btn-new-game" class="ghost-btn">لعبة جديدة بالكامل</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
